@@ -4,20 +4,21 @@ import time
 import asyncio
 from kasa import SmartPlug
 
-mqttBroker = "mqtt.eclipseprojects.io"
+mqttBroker = "10.10.10.121"
 client = mqtt.Client("Power_Box1")
 client.connect(mqttBroker)
 
-#
-#
-# # async def main():
-# #     # Create smart plug
-# #     p = SmartPlug("192.168.10.11")
-# #     await p.update()
-#
+
+async def plug_status():
+    # Create smart plug
+    p = SmartPlug("192.168.10.101")
+    await p.update()
+
+    return p.is_on
+
 
 while True:
-    power_status = uniform(20.0, 21.0)
-    client.publish("TEMPERATURE", power_status)
-    print("Just published " + str(power_status) + " to Topic TEMPERATURE")
-    time.sleep(1)
+    power_status = asyncio.run(plug_status())
+    client.publish("Plug Status: ", power_status)
+    print("Just published " + str(power_status) + " to Topic POWER")
+    time.sleep(5)
