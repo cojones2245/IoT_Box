@@ -4,18 +4,24 @@ import time
 import asyncio
 from kasa import SmartPlug
 
-global_change = False
+
+async def smart_outlet(state):
+    p = SmartPlug("192.168.8.101")
+
+    await p.update()
+    print(p.alias)
+    if state == "on":
+        await p.turn_on()
+    else:
+        await p.turn_off()
 
 
 def on_message(client, userdata, message):
-    global global_change
+    # global global_change
     sub_msg = str(message.payload.decode("utf-8"))
     print("Received message: ", sub_msg)
-    if sub_msg == "on":
-        global_change = True
-    else:
-        global_change = False
-    asyncio.run(main())
+
+    asyncio.run(smart_outlet(sub_msg))
 
 
 mqttBroker = "199.244.104.202"
@@ -26,19 +32,4 @@ client.loop_start()
 client.subscribe("test")
 client.on_message = on_message
 time.sleep(30)
-client.loop_end()
-
-
-async def main():
-    p = SmartPlug("192.168.10.101")
-
-    await p.update()
-    print(p.alias)
-    if global_change:
-        await p.turn_on()
-    else:
-        await p.turn_off()
-
-
-# if __name__ == "__main__":
-#     asyncio.run(main())
+client.loop_stop()
