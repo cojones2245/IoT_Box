@@ -16,8 +16,14 @@ async def smart_outlet(state):
         await p.turn_off()
 
 
+def on_connect(client, userdata, flags, rc):
+    if rc == 0:
+        print("connected OK Returned code=", rc)
+    else:
+        print("Bad connection Returned code=", rc)
+
+
 def on_message(client, userdata, message):
-    # global global_change
     sub_msg = str(message.payload.decode("utf-8"))
     print("Received message: ", sub_msg)
 
@@ -29,7 +35,10 @@ client = mqtt.Client("Front")
 client.connect(mqttBroker)
 
 client.loop_start()
+
 client.subscribe("test")
 client.on_message = on_message
+
 time.sleep(30)
 client.loop_stop()
+client.disconnect()
