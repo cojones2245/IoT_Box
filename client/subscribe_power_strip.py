@@ -25,7 +25,7 @@ def on_message(client, userdata, message):
     print("Received message: ", sub_msg)
 
     asyncio.run(smart_plug(sub_msg))
-
+##
 mqttBroker = "199.244.104.202"
 client = mqtt.Client("Front")
 client.connect(mqttBroker)
