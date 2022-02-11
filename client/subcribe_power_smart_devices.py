@@ -1,17 +1,31 @@
+from queue import Queue
+
 import paho.mqtt.client as mqtt
 import time
 import asyncio
 import db
+import publish_power_smart_devices
 import json
-from kasa import SmartDevice
+
+from kasa import SmartDevice, SmartPlug
+
+q = Queue()
 
 
-async def smart_device(state, smart_device_ip):
-    p = SmartDevice(smart_device_ip)
+async def plug_status():
+    # Create smart plug
+    p = SmartPlug("192.168.8.101")
+    await p.update()
+
+    return p.is_on
+
+
+async def smart_device(state):
+    p = SmartPlug("192.168.8.101")
 
     await p.update()
     print(p.alias)
-    if state == "on":
+    if state == "True":
         await p.turn_on()
     else:
         await p.turn_off()
@@ -35,8 +49,23 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, message):
     sub_msg = str(message.payload.decode("utf-8"))
     print("Received message: ", sub_msg)
-    ip = db.get_device_ip()
-    asyncio.run(smart_device(sub_msg, ip))
+    # ip = db.get_device_ip()
+    q.put(sub_msg)
+    asyncio.run(smart_device(sub_msg))
+    write_msg_file(sub_msg)
+
+
+def write_msg_file(msg):
+    with open('status.txt', 'w') as f:
+        f.write(msg)
+        # f.write('\n')
+
+
+def check_device(msg):
+    if msg == str(plug_status()):
+        return False
+    else:
+        return True
 
 
 def run():
@@ -47,13 +76,14 @@ def run():
     client.connect(mqttBroker)
     client.loop_start()
     client.subscribe("vmi/box1/#")
-    #Find some way to pass the topic to the db code
-    #find out how to get the sub topic from the paho documentation
+    # Find some way to pass the topic to the db code
+    # find out how to get the sub topic from the paho documentation
     client.on_message = on_message
-    topic =
-     #need multi threading
+    # if check_device()
+    # needmulti threading
     time.sleep(30)
     client.loop_stop()
+    # client.loop_forever(timeout=1.0, max_packets=1, retry_first_connection=False)
     client.disconnect()
 
     #
