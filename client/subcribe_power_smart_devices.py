@@ -1,15 +1,9 @@
 from queue import Queue
-
 import paho.mqtt.client as mqtt
 import time
 import asyncio
-import db
-import publish_power_smart_devices
 import json
-
 from kasa import SmartDevice, SmartPlug
-
-q = Queue()
 
 
 async def plug_status():
@@ -36,6 +30,7 @@ def on_connect(client, userdata, flags, rc):
         print("connected OK Returned code=", rc)
     else:
         print("Bad connection Returned code=", rc)
+    client.subscribe("vmi/box1/#")
 
 
 # def convert_JSON(message):
@@ -50,7 +45,8 @@ def on_message(client, userdata, message):
     sub_msg = str(message.payload.decode("utf-8"))
     print("Received message: ", sub_msg)
     # ip = db.get_device_ip()
-    q.put(sub_msg)
+    #
+    # Query device ip
     asyncio.run(smart_device(sub_msg))
     write_msg_file(sub_msg)
 
@@ -69,21 +65,17 @@ def check_device(msg):
 
 
 def run():
-    mqttBroker = "199.244.104.202"
-    client = mqtt.Client("Front")
-    client.on_connect = on_connect
-    client.username_pw_set(username="dave", password="password")
-    client.connect(mqttBroker)
-    client.loop_start()
-    client.subscribe("vmi/box1/#")
-    # Find some way to pass the topic to the db code
-    # find out how to get the sub topic from the paho documentation
-    client.on_message = on_message
-    # if check_device()
-    # needmulti threading
-    time.sleep(30)
-    client.loop_stop()
-    # client.loop_forever(timeout=1.0, max_packets=1, retry_first_connection=False)
+    while True:
+        mqttBroker = "199.244.104.202"
+        client = mqtt.Client("Front")
+        client.on_connect = on_connect
+        client.username_pw_set(username="dave", password="password")
+        client.connect(mqttBroker)
+        client.loop_start()
+        client.on_message = on_message
+        time.sleep(45)
+        client.loop_stop()
     client.disconnect()
 
-    #
+
+run()
